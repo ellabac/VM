@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VM-Tippning 2026</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    @font-face { font-family:'Brown'; src:local('Brown'),local('BrownPro'),local('Brown Pro'); font-weight:400; }
+    @font-face { font-family:'Brown'; src:local('Brown-Bold'),local('BrownPro-Bold'); font-weight:700; }
+
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+
+    :root {
+      --blue:      #9EB9D4;
+      --blue-lt:   #C8D9E8;
+      --blue-pale: #E8F0F7;
+      --blue-dk:   #6E9ABF;
+      --blue-deep: #3D6A8A;
+      --bg:        #F0F5F9;
+      --white:     #FFFFFF;
+      --text:      #1A2B38;
+      --muted:     #6A8A9E;
+      --correct:   #4A8C6A;
+      --correct-bg:#D4EDE1;
+      --wrong:     #B0B8BE;
+      --wrong-bg:  #EAEEF1;
+      --gold:      #C9A84C;
+      --silver:    #8A9BA8;
+      --bronze:    #B87A5A;
+      --line:      #BDD0E0;
+    }
+
+    body {
+      font-family:'Brown','Gill Sans','Trebuchet MS',system-ui,sans-serif;
+      background:var(--bg); color:var(--text);
+      font-size:14px; line-height:1.5;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background:var(--blue);
+      padding:48px 32px 40px;
+      text-align:center; position:relative;
+    }
+    header h1 {
+      font-size:2.2rem; font-weight:700;
+      letter-spacing:.07em; text-transform:uppercase; color:#fff;
+    }
+    header p { color:rgba(255,255,255,.7); margin-top:6px; font-size:.9rem; letter-spacing:.04em; }
+
+    #lock-btn {
+      position:absolute; top:20px; right:24px;
+      background:rgba(255,255,255,.22); border:none; border-radius:8px;
+      padding:8px 16px; color:#fff; font-size:.85rem; font-weight:700;
+      letter-spacing:.05em; cursor:pointer; font-family:inherit;
+      transition:background .15s;
+    }
+    #lock-btn:hover { background:rgba(255,255,255,.38); }
+
+    /* ── MAIN ── */
+    main { max-width:1160px; margin:0 auto; padding:40px 24px 80px; }
+
+    .section-title {
+      font-size:.68rem; font-weight:700;
+      letter-spacing:.13em; text-transform:uppercase;
+      color:var(--muted); margin-bottom:16px;
+    }
+
+    /* ── LEADERBOARD ── */
+    .leaderboard {
+      background:var(--white); border-radius:12px;
+      overflow:hidden; margin-bottom:48px;
+      box-shadow:0 1px 4px rgba(0,0,0,.06);
+    }
+    .lb-row {
+      display:flex; align-items:center;
+      padding:16px 24px; gap:14px;
+      border-bottom:1px solid var(--bg);
+      transition:background .12s;
+    }
+    .lb-row:last-child { border-bottom:none; }
+    .lb-row:hover { background:var(--bg); }
+    .rank {
+      width:26px; height:26px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:.75rem; font-weight:700; flex-shrink:0;
+    }
+    .r1{background:var(--gold);color:#fff;}
+    .r2{background:var(--silver);color:#fff;}
+    .r3{background:var(--bronze);color:#fff;}
+    .r4{background:var(--bg);color:var(--muted);}
+    .lb-name { flex:1; font-weight:700; font-size:.95rem; }
+    .lb-tags { display:flex; gap:6px; flex-wrap:wrap; }
+    .lb-tag {
+      font-size:.68rem; padding:2px 8px;
+      border-radius:20px; background:var(--bg); color:var(--muted);
+    }
+    .lb-pts { font-size:1.5rem; font-weight:700; color:var(--blue-deep); }
+    .lb-pts span { font-size:.72rem; font-weight:400; color:var(--muted); margin-left:2px; }
+
+    /* ── ADMIN MODAL ── */
+    #admin-overlay {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,.45); z-index:100;
+      align-items:center; justify-content:center;
+    }
+    #admin-overlay.open { display:flex; }
+    #admin-box {
+      background:var(--white); border-radius:14px;
+      padding:32px; width:100%; max-width:560px;
+      box-shadow:0 8px 40px rgba(0,0,0,.18); position:relative;
+    }
+    #admin-box h2 { font-size:1.1rem; font-weight:700; letter-spacing:.03em; margin-bottom:20px; }
+    .close-btn {
+      position:absolute; top:16px; right:18px;
+      background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--muted);
+    }
+    #pw-screen { display:flex; flex-direction:column; gap:12px; }
+    #pw-screen input {
+      border:1.5px solid var(--blue-lt); border-radius:8px;
+      padding:11px 14px; font-family:inherit; font-size:.95rem;
+      outline:none; transition:border-color .15s;
+    }
+    #pw-screen input:focus { border-color:var(--blue); }
+    #pw-error { color:#c0392b; font-size:.85rem; display:none; }
+    #results-screen { display:none; }
+    .r-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+    .r-group { display:flex; flex-direction:column; gap:4px; }
+    .r-group label {
+      font-size:.68rem; font-weight:700;
+      letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
+    }
+    .r-group input {
+      border:1.5px solid var(--blue-lt); border-radius:8px;
+      padding:9px 13px; font-family:inherit; font-size:.9rem;
+      background:var(--bg); outline:none; transition:border-color .15s; width:100%;
+    }
+    .r-group input:focus { border-color:var(--blue); background:#fff; }
+    .multi-label {
+      font-size:.68rem; font-weight:700;
+      letter-spacing:.1em; text-transform:uppercase;
+      color:var(--muted); display:block; margin:10px 0 6px;
+    }
+    .multi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+    .multi-grid input {
+      border:1.5px solid var(--blue-lt); border-radius:8px;
+      padding:9px 10px; font-family:inherit; font-size:.85rem;
+      background:var(--bg); outline:none; transition:border-color .15s; width:100%;
+    }
+    .multi-grid input:focus { border-color:var(--blue); background:#fff; }
+    .save-btn {
+      margin-top:18px; background:var(--blue); color:#fff;
+      border:none; padding:11px 26px; border-radius:8px;
+      font-family:inherit; font-size:.9rem; font-weight:700;
+      letter-spacing:.04em; cursor:pointer; transition:background .15s;
+    }
+    .save-btn:hover { background:var(--blue-dk); }
+
+    /* ── BRACKET CARDS ── */
+    .brackets-grid {
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+
+    .bracket-card {
+      background:var(--white); border-radius:10px;
+      overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.05);
+    }
+    .bracket-card-header {
+      background:var(--blue); padding:16px 22px;
+      display:flex; align-items:center; justify-content:space-between;
+      cursor:pointer; user-select:none;
+      transition:background .15s;
+      border-radius:10px;
+    }
+    .bracket-card-header:hover { background:var(--blue-pale); }
+    .bracket-card.open .bracket-card-header {
+      background:var(--blue);
+      border-radius:10px 10px 0 0;
+    }
+    .bracket-card-header h3 {
+      color:var(--text); font-size:.95rem; font-weight:700; letter-spacing:.04em;
+    }
+    .bracket-card.open .bracket-card-header h3 { color:#fff; }
+
+    .bracket-header-right { display:flex; align-items:center; gap:14px; }
+    .bracket-score { font-size:1.1rem; font-weight:700; color:var(--blue-deep); }
+    .bracket-score span { font-size:.72rem; font-weight:400; color:var(--muted); margin-left:1px; }
+    .bracket-card.open .bracket-score { color:rgba(255,255,255,.9); }
+    .bracket-card.open .bracket-score span { color:rgba(255,255,255,.6); }
+
+    .bracket-chevron {
+      width:18px; height:18px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--muted); transition:transform .2s;
+    }
+    .bracket-card.open .bracket-chevron { transform:rotate(180deg); color:rgba(255,255,255,.7); }
+
+    .bracket-wrap {
+      padding:22px 20px 20px; overflow-x:auto;
+      display:none;
+      border-top:1px solid var(--blue-pale);
+    }
+    .bracket-card.open .bracket-wrap { display:block; }
+
+    /* ── THE BRACKET ── */
+    .bracket {
+      display:flex;
+      align-items:stretch;
+      min-width:540px;
+    }
+
+    /* Each round column */
+    .b-col {
+      display:flex;
+      flex-direction:column;
+    }
+    .b-col-header {
+      font-size:.62rem; font-weight:700;
+      letter-spacing:.1em; text-transform:uppercase;
+      color:var(--muted); text-align:center;
+      padding-bottom:10px; margin-bottom:4px;
+      border-bottom:1px solid var(--blue-pale);
+      flex-shrink:0;
+    }
+    .b-col-body {
+      flex:1;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* Sizes */
+    .col-qf    { flex:1.6; }
+    .col-sf    { flex:1.4; }
+    .col-final { flex:1.3; }
+    .col-win   { flex:1; }
+
+    /* A match = two team slots */
+    .b-match {
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      position:relative;
+      padding-right:22px; /* space for connector */
+    }
+    /* no connector on last col */
+    .col-win .b-match { padding-right:0; }
+
+    .b-match::after { display:none; }
+
+    /* A slot = one team within a match */
+    .b-slot {
+      flex:1;
+      display:flex;
+      align-items:center;
+      padding:4px 0;
+    }
+
+    /* Team pill */
+    .b-pill {
+      display:flex; align-items:center; gap:7px;
+      padding:6px 11px; border-radius:7px;
+      font-size:.82rem; width:100%;
+      transition:background .12s;
+    }
+    .b-pill.unknown  { background:var(--blue-pale); color:var(--text); }
+    .b-pill.correct  { background:var(--correct-bg); color:#2a6045; font-weight:600; }
+    .b-pill.wrong    { background:var(--wrong-bg); color:var(--wrong); }
+    .b-pill.champion { background:var(--gold); color:#fff; font-weight:700;
+                       box-shadow:0 2px 8px rgba(201,168,76,.3); }
+
+    .b-dot {
+      width:7px; height:7px; border-radius:50%; flex-shrink:0;
+    }
+    .unknown  .b-dot { background:var(--blue); }
+    .correct  .b-dot { background:var(--correct); }
+    .wrong    .b-dot { background:var(--wrong); }
+    .champion .b-dot { background:rgba(255,255,255,.7); }
+
+    .b-name { flex:1; }
+
+    /* Points tags on pill */
+    .b-pts {
+      font-size:.7rem; font-weight:700; flex-shrink:0;
+      white-space:nowrap;
+    }
+    .correct .b-pts, .champion .b-pts { color:inherit; opacity:.85; }
+    .wrong   .b-pts  { color:var(--wrong); }
+    .unknown .b-pts  { color:var(--blue-dk); }
+
+    /* 3rd place label */
+    .b-third {
+      font-size:.62rem; font-weight:700;
+      letter-spacing:.08em; text-transform:uppercase;
+      color:var(--bronze); margin-left:2px; flex-shrink:0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>VM-Tippning 2026</h1>
+  <p>Världsmästerskap i fotboll</p>
+  <button id="lock-btn" onclick="openAdmin()">Admin</button>
+</header>
+
+<main>
+  <div class="section-title">Ställning</div>
+  <div class="leaderboard" id="leaderboard"></div>
+
+  <div class="section-title">Tippningar</div>
+  <div class="brackets-grid" id="brackets-grid"></div>
+</main>
+
+<!-- ADMIN MODAL -->
+<div id="admin-overlay">
+  <div id="admin-box">
+    <button class="close-btn" onclick="closeAdmin()">&#x2715;</button>
+
+    <div id="pw-screen">
+      <h2>Adminpanel</h2>
+      <input type="password" id="pw-input" placeholder="Lösenord"
+             onkeydown="if(event.key==='Enter')checkPw()" />
+      <div id="pw-error">Fel lösenord, försök igen.</div>
+      <button class="save-btn" onclick="checkPw()">Logga in</button>
+    </div>
+
+    <div id="results-screen">
+      <h2>Faktiskt utfall</h2>
+      <div class="r-grid">
+        <div class="r-group">
+          <label>Vinnare (1:a)</label>
+          <input type="text" id="r-winner" placeholder="t.ex. Frankrike" />
+        </div>
+        <div class="r-group">
+          <label>Finalist (2:a)</label>
+          <input type="text" id="r-second" placeholder="t.ex. Brasilien" />
+        </div>
+        <div class="r-group">
+          <label>Trea (vann 3:e-platsmatch)</label>
+          <input type="text" id="r-third" placeholder="t.ex. Spanien" />
+        </div>
+        <div class="r-group">
+          <label>Fyra (förlorade 3:e-platsmatch)</label>
+          <input type="text" id="r-fourth" placeholder="t.ex. Argentina" />
+        </div>
+      </div>
+      <span class="multi-label">Kvartsfinalister — de 4 som åkte ut i kvartsfinal</span>
+      <div class="multi-grid" id="quarter-inputs"></div>
+      <button class="save-btn" onclick="saveResults()">Spara &amp; uppdatera</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const ADMIN_PASSWORD = "vm2026";
+
+// ── PARTICIPANTS — loaded from tippningar.xlsx ────────────────────────────────
+let participants = {};
+
+async function loadExcel() {
+  const res = await fetch('tippningar.xlsx');
+  if (!res.ok) throw new Error('Kunde inte ladda tippningar.xlsx');
+  const buf = await res.arrayBuffer();
+  const wb  = XLSX.read(buf, { type: 'array', cellStyles: true });
+  const ws  = wb.Sheets[wb.SheetNames[0]];
+
+  const range = XLSX.utils.decode_range(ws['!ref']);
+
+  // Helper: get cell value as trimmed string
+  const val = (r, c) => {
+    const cell = ws[XLSX.utils.encode_cell({ r, c })];
+    return cell ? cell.v.toString().trim() : '';
+  };
+
+  // Helper: is cell bold?
+  const bold = (r, c) => {
+    const cell = ws[XLSX.utils.encode_cell({ r, c })];
+    return !!(cell && cell.s && cell.s.font && cell.s.font.bold);
+  };
+
+  // Find person columns — any non-empty cell in row 0 except col 0 (which is the label column)
+  participants = {};
+  for (let c = 1; c <= range.e.c; c++) {
+    const name = val(0, c);
+    if (!name) continue;
+
+    const semi0   = val(5, c);
+    const semi1   = val(6, c);
+    const third   = bold(5, c) ? semi0 : bold(6, c) ? semi1 : null;
+    const quarter = [8, 9, 10, 11].map(r => val(r, c)).filter(Boolean);
+
+    participants[name] = {
+      winner:  val(1, c),
+      second:  val(3, c),
+      third,
+      semi:    [semi0, semi1].filter(Boolean),
+      quarter
+    };
+  }
+}
+
+// ── RESULTS ───────────────────────────────────────────────────────────────────
+let results = { winner:"", second:"", third:"", fourth:"", quarter:["","","",""] };
+
+const norm = s => (s||"").trim().toLowerCase();
+
+function hasResults() {
+  return !!(results.winner || results.second || results.third || results.fourth
+            || results.quarter.some(Boolean));
+}
+
+// Stage points a team actually earned: QF=1, SF=2, Final=3
+function stagePoints(team) {
+  const t = norm(team); if (!t) return 0;
+  const r = results;
+  const qf  = [r.winner, r.second, r.third, r.fourth, ...r.quarter].filter(Boolean).map(norm);
+  const sf  = [r.winner, r.second, r.third, r.fourth].filter(Boolean).map(norm);
+  const fin = [r.winner, r.second].filter(Boolean).map(norm);
+  if (fin.includes(t)) return 3;
+  if (sf.includes(t))  return 2;
+  if (qf.includes(t))  return 1;
+  return 0;
+}
+
+// Per-round slot state: did this team actually make it TO this round?
+function slotState(team, minStage) {
+  if (!hasResults()) return "unknown";
+  return stagePoints(team) >= minStage ? "correct" : "wrong";
+}
+
+// ── SCORING ───────────────────────────────────────────────────────────────────
+// Every tipped team earns 1p per round advanced (QF, SF, Final = max 3p).
+// Bonus: +2p correct winner, +1p correct 2nd, +1p correct 3rd.
+function scoreParticipant(p) {
+  const allTipped = [p.winner, p.second, p.third, ...p.semi, ...p.quarter].filter(Boolean);
+  let stagePts = 0;
+  allTipped.forEach(t => stagePts += stagePoints(t));
+
+  let bonusPts = 0;
+  const r = results;
+  if (r.winner && norm(p.winner) === norm(r.winner)) bonusPts += 2;
+  if (r.second && norm(p.second) === norm(r.second)) bonusPts += 1;
+  if (r.third  && norm(p.third)  === norm(r.third))  bonusPts += 1;
+
+  return { pts: stagePts + bonusPts, stagePts, bonusPts };
+}
+
+// ── LEADERBOARD ───────────────────────────────────────────────────────────────
+function renderLeaderboard() {
+  const scores = Object.entries(participants).map(([name, p]) => {
+    const { pts, stagePts, bonusPts } = scoreParticipant(p);
+    return { name, pts, stagePts, bonusPts };
+  }).sort((a,b) => b.pts - a.pts);
+
+  document.getElementById("leaderboard").innerHTML = scores.map((s,i) => {
+    const rc = ["r1","r2","r3","r4"][Math.min(i,3)];
+    const tags = [
+      s.stagePts ? `${s.stagePts}p rond`    : "",
+      s.bonusPts ? `+${s.bonusPts}p bonus`  : "",
+    ].filter(Boolean).map(t => `<span class="lb-tag">${t}</span>`).join("");
+    return `<div class="lb-row">
+      <div class="rank ${rc}">${i+1}</div>
+      <div class="lb-name">${s.name}</div>
+      <div class="lb-tags">${tags}</div>
+      <div class="lb-pts">${s.pts}<span>p</span></div>
+    </div>`;
+  }).join("");
+}
+
+// ── BRACKET RENDERER ──────────────────────────────────────────────────────────
+// Bracket arrangement (arbitrary but consistent pairings):
+//
+// QF match 1: semi[0]  vs quarter[0]   → semi[0] advances
+// QF match 2: winner   vs quarter[1]   → winner  advances
+// QF match 3: semi[1]  vs quarter[2]   → semi[1] advances
+// QF match 4: second   vs quarter[3]   → second  advances
+//
+// SF match 1: semi[0]  vs winner        → winner  advances (semi[0] = potential 3rd)
+// SF match 2: semi[1]  vs second        → second  advances (semi[1] = potential 3rd)
+//
+// Final:      winner   vs second        → winner  wins
+// Winner:     winner
+
+function pill(team, minStage, extraClass, ptsStr) {
+  const state = hasResults() ? slotState(team, minStage) : "unknown";
+  const cls   = extraClass || state;
+  const pts   = (hasResults() && ptsStr) ? `<span class="b-pts">${ptsStr}</span>` : "";
+  return `<div class="b-pill ${cls}">
+    <div class="b-dot"></div>
+    <span class="b-name">${team}</span>${pts}
+  </div>`;
+}
+
+function semipill(team, thirdPick, minStage, ptsStr, bonusStr) {
+  const state    = hasResults() ? slotState(team, minStage) : "unknown";
+  const isThird  = norm(team) === norm(thirdPick);
+  const thirdLbl = isThird ? `<span class="b-third">3:a</span>` : "";
+  const pts      = (hasResults() && ptsStr)  ? `<span class="b-pts">${ptsStr}</span>`  : "";
+  const bonus    = (hasResults() && bonusStr) ? `<span class="b-pts">${bonusStr}</span>` : "";
+  return `<div class="b-pill ${state}">
+    <div class="b-dot"></div>
+    <span class="b-name">${team}</span>${thirdLbl}${pts}${bonus}
+  </div>`;
+}
+
+function slot(innerHTML) {
+  return `<div class="b-slot">${innerHTML}</div>`;
+}
+
+function match(...slots) {
+  return `<div class="b-match">${slots.join("")}</div>`;
+}
+
+function bracketFor(name, p) {
+  const { pts } = scoreParticipant(p);
+  const r       = results;
+  const isR     = hasResults();
+
+  // Points for display (only when results are set)
+  const sp = t => isR ? stagePoints(t) : null;
+  const ptsLabel = (t, extraBonus) => {
+    if (!isR) return "";
+    const s = sp(t);
+    const bonus = extraBonus || 0;
+    const total = s + bonus;
+    return total > 0 ? `+${total}p` : "";
+  };
+
+  // Bonus checks
+  const winnerBonus  = (isR && norm(p.winner) === norm(r.winner) && r.winner) ? 2 : 0;
+  const secondBonus  = (isR && norm(p.second) === norm(r.second) && r.second) ? 1 : 0;
+  const thirdBonus   = (isR && norm(p.third)  === norm(r.third)  && r.third)  ? 1 : 0;
+
+  // Which semi is 3rd pick?
+  const thirdIsS0 = norm(p.semi[0]) === norm(p.third);
+
+  // Stage pts for each team's exit point
+  const s0bonus = thirdIsS0 ? thirdBonus : 0;
+  const s1bonus = !thirdIsS0 ? thirdBonus : 0;
+
+  // ── BUILD COLUMNS ──
+
+  // QF column (4 matches, 8 teams)
+  const qfCol = `
+    <div class="b-col col-qf">
+      <div class="b-col-header">Kvartsfinaler</div>
+      <div class="b-col-body">
+        ${match(
+          slot(pill(p.semi[0],  1, "", "")),
+          slot(pill(p.quarter[0], 1, "", isR ? (sp(p.quarter[0]) > 0 ? `+${sp(p.quarter[0])}p` : "") : ""))
+        )}
+        ${match(
+          slot(pill(p.winner,   1, "", "")),
+          slot(pill(p.quarter[1], 1, "", isR ? (sp(p.quarter[1]) > 0 ? `+${sp(p.quarter[1])}p` : "") : ""))
+        )}
+        ${match(
+          slot(pill(p.semi[1],  1, "", "")),
+          slot(pill(p.quarter[2], 1, "", isR ? (sp(p.quarter[2]) > 0 ? `+${sp(p.quarter[2])}p` : "") : ""))
+        )}
+        ${match(
+          slot(pill(p.second,   1, "", "")),
+          slot(pill(p.quarter[3], 1, "", isR ? (sp(p.quarter[3]) > 0 ? `+${sp(p.quarter[3])}p` : "") : ""))
+        )}
+      </div>
+    </div>`;
+
+  // SF column (2 matches, 4 teams)
+  // Each SF match spans 2 QF matches in height (flex:1 on each match aligns them)
+  const sfCol = `
+    <div class="b-col col-sf">
+      <div class="b-col-header">Semifinaler</div>
+      <div class="b-col-body">
+        ${match(
+          slot(pill(p.winner,  2, "", "")),
+          slot(semipill(p.semi[0], p.third, 2,
+                isR ? (sp(p.semi[0]) > 0 ? `+${sp(p.semi[0])}p` : "") : "",
+                s0bonus ? `+${s0bonus}p bonus` : ""))
+        )}
+        ${match(
+          slot(pill(p.second,  2, "", "")),
+          slot(semipill(p.semi[1], p.third, 2,
+                isR ? (sp(p.semi[1]) > 0 ? `+${sp(p.semi[1])}p` : "") : "",
+                s1bonus ? `+${s1bonus}p bonus` : ""))
+        )}
+      </div>
+    </div>`;
+
+  // Final column (1 match, 2 teams)
+  const winLabel  = ptsLabel(p.winner, winnerBonus);
+  const secLabel  = ptsLabel(p.second, secondBonus);
+  const winState  = !isR ? "unknown" : slotState(p.winner, 3);
+  const secState  = !isR ? "unknown" : slotState(p.second, 3);
+
+  const finalCol = `
+    <div class="b-col col-final">
+      <div class="b-col-header">Final</div>
+      <div class="b-col-body">
+        ${match(
+          slot(`<div class="b-pill ${winState}"><div class="b-dot"></div><span class="b-name">${p.winner}</span>${winLabel ? `<span class="b-pts">${winLabel}</span>` : ""}</div>`),
+          slot(`<div class="b-pill ${secState}"><div class="b-dot"></div><span class="b-name">${p.second}</span>${secLabel ? `<span class="b-pts">${secLabel}</span>` : ""}</div>`)
+        )}
+      </div>
+    </div>`;
+
+  // Winner column (1 team, centred)
+  const champState = !isR ? "unknown"
+    : (norm(p.winner) === norm(r.winner) && r.winner) ? "champion"
+    : slotState(p.winner, 3) === "correct" ? "correct" : "wrong";
+
+  const winnerCol = `
+    <div class="b-col col-win">
+      <div class="b-col-header">Vinnare</div>
+      <div class="b-col-body">
+        <div class="b-match">
+          <div class="b-slot" style="flex:1"></div>
+          <div class="b-slot" style="flex:0 0 auto; padding:4px 0;">
+            <div class="b-pill ${champState}">
+              <div class="b-dot"></div>
+              <span class="b-name">${p.winner}</span>
+            </div>
+          </div>
+          <div class="b-slot" style="flex:1"></div>
+        </div>
+      </div>
+    </div>`;
+
+  return `
+    <div class="bracket-card" id="card-${name}">
+      <div class="bracket-card-header" onclick="toggleCard('${name}')">
+        <h3>${name}</h3>
+        <div class="bracket-header-right">
+          <div class="bracket-score">${pts}<span>p</span></div>
+          <div class="bracket-chevron">
+            <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+              <path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="bracket-wrap">
+        <div class="bracket">
+          ${qfCol}${sfCol}${finalCol}${winnerCol}
+        </div>
+      </div>
+    </div>`;
+}
+
+function toggleCard(name) {
+  document.getElementById(`card-${name}`).classList.toggle("open");
+}
+
+function renderBrackets() {
+  document.getElementById("brackets-grid").innerHTML =
+    Object.entries(participants).map(([n,p]) => bracketFor(n,p)).join("");
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+function openAdmin() {
+  document.getElementById("admin-overlay").classList.add("open");
+  document.getElementById("pw-input").focus();
+}
+function closeAdmin() {
+  document.getElementById("admin-overlay").classList.remove("open");
+}
+document.getElementById("admin-overlay").addEventListener("click", e => {
+  if (e.target === document.getElementById("admin-overlay")) closeAdmin();
+});
+function checkPw() {
+  if (document.getElementById("pw-input").value === ADMIN_PASSWORD) {
+    document.getElementById("pw-screen").style.display = "none";
+    document.getElementById("results-screen").style.display = "block";
+    document.getElementById("r-winner").value  = results.winner;
+    document.getElementById("r-second").value  = results.second;
+    document.getElementById("r-third").value   = results.third;
+    document.getElementById("r-fourth").value  = results.fourth;
+    results.quarter.forEach((v,i) => { const el = document.getElementById(`q-${i}`); if(el) el.value = v; });
+  } else {
+    document.getElementById("pw-error").style.display = "block";
+  }
+}
+function saveResults() {
+  results.winner  = document.getElementById("r-winner").value.trim();
+  results.second  = document.getElementById("r-second").value.trim();
+  results.third   = document.getElementById("r-third").value.trim();
+  results.fourth  = document.getElementById("r-fourth").value.trim();
+  results.quarter = Array.from({length:4}, (_,i) => (document.getElementById(`q-${i}`)?.value||"").trim());
+  closeAdmin();
+  setTimeout(() => {
+    document.getElementById("pw-screen").style.display = "flex";
+    document.getElementById("results-screen").style.display = "none";
+    document.getElementById("pw-input").value = "";
+    document.getElementById("pw-error").style.display = "none";
+  }, 300);
+  renderLeaderboard();
+  renderBrackets();
+}
+
+// ── BUILD INPUTS ──────────────────────────────────────────────────────────────
+function buildInputs() {
+  document.getElementById("quarter-inputs").innerHTML =
+    Array.from({length:4}, (_,i) => `<input type="text" id="q-${i}" placeholder="Lag ${i+1}" />`).join("");
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+async function init() {
+  buildInputs();
+  document.getElementById('leaderboard').innerHTML =
+    '<div style="padding:20px 24px;color:var(--muted);font-size:.9rem;">Laddar...</div>';
+  try {
+    await loadExcel();
+  } catch(e) {
+    document.getElementById('leaderboard').innerHTML =
+      `<div style="padding:20px 24px;color:#c0392b;font-size:.9rem;">
+        Kunde inte ladda tippningar.xlsx — kontrollera att filen finns i samma mapp.
+      </div>`;
+    return;
+  }
+  renderLeaderboard();
+  renderBrackets();
+}
+init();
+</script>
+</body>
+</html>
