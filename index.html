@@ -371,9 +371,9 @@ async function loadExcel() {
   const range = XLSX.utils.decode_range(ws['!ref']);
 
   // Helper: get cell value as trimmed string
-  const val = (r, c) => {
+const val = (r, c) => {
     const cell = ws[XLSX.utils.encode_cell({ r, c })];
-    return cell ? cell.v.toString().trim() : '';
+    return (cell && cell.v !== undefined && cell.v !== null) ? cell.v.toString().trim() : '';
   };
 
   // Helper: is cell bold?
