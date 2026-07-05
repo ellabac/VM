@@ -49,15 +49,6 @@
     }
     header p { color:rgba(255,255,255,.7); margin-top:6px; font-size:.9rem; letter-spacing:.04em; }
 
-    #lock-btn {
-      position:absolute; top:20px; right:24px;
-      background:rgba(255,255,255,.22); border:none; border-radius:8px;
-      padding:8px 16px; color:#fff; font-size:.85rem; font-weight:700;
-      letter-spacing:.05em; cursor:pointer; font-family:inherit;
-      transition:background .15s;
-    }
-    #lock-btn:hover { background:rgba(255,255,255,.38); }
-
     /* ── MAIN ── */
     main { max-width:1160px; margin:0 auto; padding:40px 24px 80px; }
 
@@ -98,64 +89,6 @@
     }
     .lb-pts { font-size:1.5rem; font-weight:700; color:var(--blue-deep); }
     .lb-pts span { font-size:.72rem; font-weight:400; color:var(--muted); margin-left:2px; }
-
-    /* ── ADMIN MODAL ── */
-    #admin-overlay {
-      display:none; position:fixed; inset:0;
-      background:rgba(0,0,0,.45); z-index:100;
-      align-items:center; justify-content:center;
-    }
-    #admin-overlay.open { display:flex; }
-    #admin-box {
-      background:var(--white); border-radius:14px;
-      padding:32px; width:100%; max-width:560px;
-      box-shadow:0 8px 40px rgba(0,0,0,.18); position:relative;
-    }
-    #admin-box h2 { font-size:1.1rem; font-weight:700; letter-spacing:.03em; margin-bottom:20px; }
-    .close-btn {
-      position:absolute; top:16px; right:18px;
-      background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--muted);
-    }
-    #pw-screen { display:flex; flex-direction:column; gap:12px; }
-    #pw-screen input {
-      border:1.5px solid var(--blue-lt); border-radius:8px;
-      padding:11px 14px; font-family:inherit; font-size:.95rem;
-      outline:none; transition:border-color .15s;
-    }
-    #pw-screen input:focus { border-color:var(--blue); }
-    #pw-error { color:#c0392b; font-size:.85rem; display:none; }
-    #results-screen { display:none; }
-    .r-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
-    .r-group { display:flex; flex-direction:column; gap:4px; }
-    .r-group label {
-      font-size:.68rem; font-weight:700;
-      letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
-    }
-    .r-group input {
-      border:1.5px solid var(--blue-lt); border-radius:8px;
-      padding:9px 13px; font-family:inherit; font-size:.9rem;
-      background:var(--bg); outline:none; transition:border-color .15s; width:100%;
-    }
-    .r-group input:focus { border-color:var(--blue); background:#fff; }
-    .multi-label {
-      font-size:.68rem; font-weight:700;
-      letter-spacing:.1em; text-transform:uppercase;
-      color:var(--muted); display:block; margin:10px 0 6px;
-    }
-    .multi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
-    .multi-grid input {
-      border:1.5px solid var(--blue-lt); border-radius:8px;
-      padding:9px 10px; font-family:inherit; font-size:.85rem;
-      background:var(--bg); outline:none; transition:border-color .15s; width:100%;
-    }
-    .multi-grid input:focus { border-color:var(--blue); background:#fff; }
-    .save-btn {
-      margin-top:18px; background:var(--blue); color:#fff;
-      border:none; padding:11px 26px; border-radius:8px;
-      font-family:inherit; font-size:.9rem; font-weight:700;
-      letter-spacing:.04em; cursor:pointer; transition:background .15s;
-    }
-    .save-btn:hover { background:var(--blue-dk); }
 
     /* ── BRACKET CARDS ── */
     .brackets-grid {
@@ -303,7 +236,6 @@
 <header>
   <h1>VM-Tippning 2026</h1>
   <p>Hejsan allihopa, här kan ni se vem som leder årets tippning och vad alla har tippat! /Ella</p>
-  <button id="lock-btn" onclick="openAdmin()">Admin</button>
 </header>
 
 <main>
@@ -314,50 +246,7 @@
   <div class="brackets-grid" id="brackets-grid"></div>
 </main>
 
-<!-- ADMIN MODAL -->
-<div id="admin-overlay">
-  <div id="admin-box">
-    <button class="close-btn" onclick="closeAdmin()">&#x2715;</button>
-
-    <div id="pw-screen">
-      <h2>Adminpanel</h2>
-      <input type="password" id="pw-input" placeholder="Lösenord"
-             onkeydown="if(event.key==='Enter')checkPw()" />
-      <div id="pw-error">Fel lösenord, försök igen.</div>
-      <button class="save-btn" onclick="checkPw()">Logga in</button>
-    </div>
-
-    <div id="results-screen">
-      <h2>Faktiskt utfall</h2>
-      <div class="r-grid">
-        <div class="r-group">
-          <label>Vinnare (1:a)</label>
-          <input type="text" id="r-winner" placeholder="t.ex. Frankrike" />
-        </div>
-        <div class="r-group">
-          <label>Finalist (2:a)</label>
-          <input type="text" id="r-second" placeholder="t.ex. Brasilien" />
-        </div>
-        <div class="r-group">
-          <label>Trea (vann 3:e-platsmatch)</label>
-          <input type="text" id="r-third" placeholder="t.ex. Spanien" />
-        </div>
-        <div class="r-group">
-          <label>Fyra (förlorade 3:e-platsmatch)</label>
-          <input type="text" id="r-fourth" placeholder="t.ex. Argentina" />
-        </div>
-      </div>
-      <span class="multi-label">Kvartsfinalister — de 4 som åkte ut i kvartsfinal</span>
-      <div class="multi-grid" id="quarter-inputs"></div>
-      <button class="save-btn" onclick="saveResults()">Spara &amp; uppdatera</button>
-    </div>
-  </div>
-</div>
-
 <script>
-// ── CONFIG ────────────────────────────────────────────────────────────────────
-const ADMIN_PASSWORD = "vm2026";
-
 // ── PARTICIPANTS — loaded from tippningar.xlsx ────────────────────────────────
 let participants = {};
 
@@ -403,8 +292,39 @@ const val = (r, c) => {
   }
 }
 
-// ── RESULTS ───────────────────────────────────────────────────────────────────
+// ── RESULTS — loaded from Resultat.xlsx ───────────────────────────────────────
 let results = { winner:"", second:"", third:"", fourth:"", quarter:["","","",""] };
+
+async function loadResultsExcel() {
+  const res = await fetch('Resultat.xlsx');
+  if (!res.ok) throw new Error('Kunde inte ladda Resultat.xlsx');
+  const buf = await res.arrayBuffer();
+  const wb  = XLSX.read(buf, { type: 'array', cellStyles: true });
+  const ws  = wb.Sheets[wb.SheetNames[0]];
+
+  // Helper: get cell value as trimmed string (column B = index 1)
+  const val = r => {
+    const cell = ws[XLSX.utils.encode_cell({ r, c: 1 })];
+    return (cell && cell.v !== undefined && cell.v !== null) ? cell.v.toString().trim() : '';
+  };
+
+  // Helper: is cell bold?
+  const bold = r => {
+    const cell = ws[XLSX.utils.encode_cell({ r, c: 1 })];
+    return !!(cell && cell.s && cell.s.font && cell.s.font.bold);
+  };
+
+  // Same row layout as tippningar.xlsx: winner=row1, second=row3, semi=rows5-6, quarter=rows8-11
+  const winner = val(1);
+  const second = val(3);
+  const semi0  = val(5);
+  const semi1  = val(6);
+  const third  = bold(5) ? semi0 : bold(6) ? semi1 : '';
+  const fourth = bold(5) ? semi1 : bold(6) ? semi0 : '';
+  const quarter = [8, 9, 10, 11].map(val);
+
+  results = { winner, second, third, fourth, quarter };
+}
 
 const norm = s => (s||"").trim().toLowerCase();
 
@@ -658,56 +578,8 @@ function renderBrackets() {
     Object.entries(participants).map(([n,p]) => bracketFor(n,p)).join("");
 }
 
-// ── ADMIN ─────────────────────────────────────────────────────────────────────
-function openAdmin() {
-  document.getElementById("admin-overlay").classList.add("open");
-  document.getElementById("pw-input").focus();
-}
-function closeAdmin() {
-  document.getElementById("admin-overlay").classList.remove("open");
-}
-document.getElementById("admin-overlay").addEventListener("click", e => {
-  if (e.target === document.getElementById("admin-overlay")) closeAdmin();
-});
-function checkPw() {
-  if (document.getElementById("pw-input").value === ADMIN_PASSWORD) {
-    document.getElementById("pw-screen").style.display = "none";
-    document.getElementById("results-screen").style.display = "block";
-    document.getElementById("r-winner").value  = results.winner;
-    document.getElementById("r-second").value  = results.second;
-    document.getElementById("r-third").value   = results.third;
-    document.getElementById("r-fourth").value  = results.fourth;
-    results.quarter.forEach((v,i) => { const el = document.getElementById(`q-${i}`); if(el) el.value = v; });
-  } else {
-    document.getElementById("pw-error").style.display = "block";
-  }
-}
-function saveResults() {
-  results.winner  = document.getElementById("r-winner").value.trim();
-  results.second  = document.getElementById("r-second").value.trim();
-  results.third   = document.getElementById("r-third").value.trim();
-  results.fourth  = document.getElementById("r-fourth").value.trim();
-  results.quarter = Array.from({length:4}, (_,i) => (document.getElementById(`q-${i}`)?.value||"").trim());
-  closeAdmin();
-  setTimeout(() => {
-    document.getElementById("pw-screen").style.display = "flex";
-    document.getElementById("results-screen").style.display = "none";
-    document.getElementById("pw-input").value = "";
-    document.getElementById("pw-error").style.display = "none";
-  }, 300);
-  renderLeaderboard();
-  renderBrackets();
-}
-
-// ── BUILD INPUTS ──────────────────────────────────────────────────────────────
-function buildInputs() {
-  document.getElementById("quarter-inputs").innerHTML =
-    Array.from({length:4}, (_,i) => `<input type="text" id="q-${i}" placeholder="Lag ${i+1}" />`).join("");
-}
-
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
-  buildInputs();
   document.getElementById('leaderboard').innerHTML =
     '<div style="padding:20px 24px;color:var(--muted);font-size:.9rem;">Laddar...</div>';
   try {
@@ -718,6 +590,12 @@ async function init() {
         Kunde inte ladda tippningar.xlsx — kontrollera att filen finns i samma mapp.
       </div>`;
     return;
+  }
+  try {
+    await loadResultsExcel();
+  } catch(e) {
+    // Resultat.xlsx saknas eller är tom — det är okej, då visas tippningarna utan facit än.
+    console.warn('Kunde inte ladda Resultat.xlsx:', e);
   }
   renderLeaderboard();
   renderBrackets();
