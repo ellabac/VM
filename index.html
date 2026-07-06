@@ -379,7 +379,7 @@ function renderLeaderboard() {
   document.getElementById("leaderboard").innerHTML = scores.map((s,i) => {
     const rc = ["r1","r2","r3","r4"][Math.min(i,3)];
     const tags = [
-      s.stagePts ? `${s.stagePts}p rond`    : "",
+      s.stagePts ? `${s.stagePts}p runda`    : "",
       s.bonusPts ? `+${s.bonusPts}p bonus`  : "",
     ].filter(Boolean).map(t => `<span class="lb-tag">${t}</span>`).join("");
     return `<div class="lb-row">
