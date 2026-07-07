@@ -374,14 +374,22 @@ function renderLeaderboard() {
     return { name, pts, stagePts, bonusPts };
   }).sort((a,b) => b.pts - a.pts);
 
-  document.getElementById("leaderboard").innerHTML = scores.map((s,i) => {
-    const rc = ["r1","r2","r3","r4"][Math.min(i,3)];
+  // Dense ranking: equal point totals share the same position, and the next
+  // distinct total takes the very next position (no gaps for ties).
+  let rank = 0, lastPts = null;
+  scores.forEach(s => {
+    if (lastPts === null || s.pts !== lastPts) { rank += 1; lastPts = s.pts; }
+    s.rank = rank;
+  });
+
+  document.getElementById("leaderboard").innerHTML = scores.map(s => {
+    const rc = ["r1","r2","r3","r4"][Math.min(s.rank-1,3)];
     const tags = [
       s.stagePts ? `${s.stagePts}p rond`    : "",
       s.bonusPts ? `+${s.bonusPts}p bonus`  : "",
     ].filter(Boolean).map(t => `<span class="lb-tag">${t}</span>`).join("");
     return `<div class="lb-row">
-      <div class="rank ${rc}">${i+1}</div>
+      <div class="rank ${rc}">${s.rank}</div>
       <div class="lb-name">${s.name}</div>
       <div class="lb-tags">${tags}</div>
       <div class="lb-pts">${s.pts}<span>p</span></div>
