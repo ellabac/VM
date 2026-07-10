@@ -70,8 +70,9 @@
       border-bottom:1px solid var(--bg);
       transition:background .12s;
     }
-    .lb-row:last-child { border-bottom:none; }
     .lb-row:hover { background:var(--bg); }
+    .lb-row { cursor:pointer; }
+    .lb-item:last-child .lb-row { border-bottom:none; }
     .rank {
       width:26px; height:26px; border-radius:50%;
       display:flex; align-items:center; justify-content:center;
@@ -90,53 +91,22 @@
     .lb-pts { font-size:1.5rem; font-weight:700; color:var(--blue-deep); }
     .lb-pts span { font-size:.72rem; font-weight:400; color:var(--muted); margin-left:2px; }
 
-    /* ── BRACKET CARDS ── */
-    .brackets-grid {
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-    }
-
-    .bracket-card {
-      background:var(--white); border-radius:10px;
-      overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.05);
-    }
-    .bracket-card-header {
-      background:var(--blue); padding:16px 22px;
-      display:flex; align-items:center; justify-content:space-between;
-      cursor:pointer; user-select:none;
-      transition:background .15s;
-      border-radius:10px;
-    }
-    .bracket-card-header:hover { background:var(--blue-pale); }
-    .bracket-card.open .bracket-card-header {
-      background:var(--blue);
-      border-radius:10px 10px 0 0;
-    }
-    .bracket-card-header h3 {
-      color:var(--text); font-size:.95rem; font-weight:700; letter-spacing:.04em;
-    }
-    .bracket-card.open .bracket-card-header h3 { color:#fff; }
-
-    .bracket-header-right { display:flex; align-items:center; gap:14px; }
-    .bracket-score { font-size:1.1rem; font-weight:700; color:var(--blue-deep); }
-    .bracket-score span { font-size:.72rem; font-weight:400; color:var(--muted); margin-left:1px; }
-    .bracket-card.open .bracket-score { color:rgba(255,255,255,.9); }
-    .bracket-card.open .bracket-score span { color:rgba(255,255,255,.6); }
+    /* ── EXPANDABLE TIPPNING (per leaderboard row) ── */
+    .lb-item { background:var(--white); }
 
     .bracket-chevron {
       width:18px; height:18px; flex-shrink:0;
       display:flex; align-items:center; justify-content:center;
       color:var(--muted); transition:transform .2s;
     }
-    .bracket-card.open .bracket-chevron { transform:rotate(180deg); color:rgba(255,255,255,.7); }
+    .lb-item.open .bracket-chevron { transform:rotate(180deg); color:var(--blue-deep); }
 
     .bracket-wrap {
-      padding:22px 20px 20px; overflow-x:auto;
+      padding:18px 24px 22px; overflow-x:auto;
       display:none;
-      border-top:1px solid var(--blue-pale);
+      background:var(--blue-pale);
     }
-    .bracket-card.open .bracket-wrap { display:block; }
+    .lb-item.open .bracket-wrap { display:block; }
 
     /* ── THE BRACKET ── */
     .bracket {
@@ -241,9 +211,6 @@
 <main>
   <div class="section-title">Ställning</div>
   <div class="leaderboard" id="leaderboard"></div>
-
-  <div class="section-title">Tippningar</div>
-  <div class="brackets-grid" id="brackets-grid"></div>
 </main>
 
 <script>
@@ -388,16 +355,24 @@ function renderLeaderboard() {
       s.stagePts ? `${s.stagePts}p rond`    : "",
       s.bonusPts ? `+${s.bonusPts}p bonus`  : "",
     ].filter(Boolean).map(t => `<span class="lb-tag">${t}</span>`).join("");
-    return `<div class="lb-row">
-      <div class="rank ${rc}">${s.rank}</div>
-      <div class="lb-name">${s.name}</div>
-      <div class="lb-tags">${tags}</div>
-      <div class="lb-pts">${s.pts}<span>p</span></div>
+    return `<div class="lb-item" id="card-${s.name}">
+      <div class="lb-row" onclick="toggleCard('${s.name}')">
+        <div class="rank ${rc}">${s.rank}</div>
+        <div class="lb-name">${s.name}</div>
+        <div class="lb-tags">${tags}</div>
+        <div class="lb-pts">${s.pts}<span>p</span></div>
+        <div class="bracket-chevron">
+          <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+            <path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+      ${bracketInner(s.name, participants[s.name])}
     </div>`;
   }).join("");
 }
 
-// ── BRACKET RENDERER ──────────────────────────────────────────────────────────
+// ── BRACKET (TIPPNING) RENDERER ────────────────────────────────────────────────
 // Bracket arrangement (arbitrary but consistent pairings):
 //
 // QF match 1: semi[0]  vs quarter[0]   → semi[0] advances
@@ -441,8 +416,7 @@ function match(...slots) {
   return `<div class="b-match">${slots.join("")}</div>`;
 }
 
-function bracketFor(name, p) {
-  const { pts } = scoreParticipant(p);
+function bracketInner(name, p) {
   const r       = results;
   const isR     = hasResults();
 
@@ -555,33 +529,15 @@ function bracketFor(name, p) {
     </div>`;
 
   return `
-    <div class="bracket-card" id="card-${name}">
-      <div class="bracket-card-header" onclick="toggleCard('${name}')">
-        <h3>${name}</h3>
-        <div class="bracket-header-right">
-          <div class="bracket-score">${pts}<span>p</span></div>
-          <div class="bracket-chevron">
-            <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-              <path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-        </div>
-      </div>
-      <div class="bracket-wrap">
-        <div class="bracket">
-          ${qfCol}${sfCol}${finalCol}${winnerCol}
-        </div>
+    <div class="bracket-wrap">
+      <div class="bracket">
+        ${qfCol}${sfCol}${finalCol}${winnerCol}
       </div>
     </div>`;
 }
 
 function toggleCard(name) {
   document.getElementById(`card-${name}`).classList.toggle("open");
-}
-
-function renderBrackets() {
-  document.getElementById("brackets-grid").innerHTML =
-    Object.entries(participants).map(([n,p]) => bracketFor(n,p)).join("");
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
@@ -604,7 +560,6 @@ async function init() {
     console.warn('Kunde inte ladda Resultat.xlsx:', e);
   }
   renderLeaderboard();
-  renderBrackets();
 }
 init();
 </script>
