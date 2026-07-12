@@ -278,12 +278,12 @@ async function loadResultsExcel() {
   const val = r => { const v = raw(r); return v.toLowerCase() === 'x' ? '' : v; };
 
   // Layout: Vinnare=row1, Tvåa=row3, Final=rows5-6 (2), Trea=row8,
-  // Semi=rows10-11 (2, the two semifinal losers), Kvart=rows15-22 (8)
+  // Semi=rows10-13 (4, all four semifinalists), Kvart=rows15-22 (8)
   const winner  = val(1);
   const second  = val(3);
   const final   = [5, 6].map(val).filter(Boolean);
   const third   = val(8);
-  const semi    = [10, 11].map(val).filter(Boolean);
+  const semi    = [10, 11, 12, 13].map(val).filter(Boolean);
   const quarter = [15, 16, 17, 18, 19, 20, 21, 22].map(val).filter(Boolean);
 
   results = { winner, second, third, final, semi, quarter };
