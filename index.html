@@ -321,7 +321,9 @@ function slotState(team, minStage) {
 // Every tipped team earns 1p per round advanced (QF, SF, Final = max 3p).
 // Bonus: +2p correct winner, +1p correct 2nd, +1p correct 3rd.
 function scoreParticipant(p) {
-  const allTipped = [p.winner, p.second, p.third, ...p.semi, ...p.quarter].filter(Boolean);
+  // p.third is already one of the two teams in p.semi (it's just their 3rd-place
+  // guess among those two) — don't list it separately or its stage points get counted twice.
+  const allTipped = [p.winner, p.second, ...p.semi, ...p.quarter].filter(Boolean);
   let stagePts = 0;
   allTipped.forEach(t => stagePts += stagePoints(t));
 
