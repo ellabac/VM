@@ -318,14 +318,20 @@ function slotState(team, minStage) {
 }
 
 // ── SCORING ───────────────────────────────────────────────────────────────────
-// Every tipped team earns 1p per round advanced (QF, SF, Final = max 3p).
+// Each tipped team earns points capped by which slot you predicted it into:
+// a "Kvart" pick maxes out at 1p, a "Semi" pick at 2p, winner/second picks at 3p —
+// even if the team actually advances further than that slot implied.
 // Bonus: +2p correct winner, +1p correct 2nd, +1p correct 3rd.
+function cappedPoints(team, cap) {
+  return team ? Math.min(stagePoints(team), cap) : 0;
+}
+
 function scoreParticipant(p) {
-  // p.third is already one of the two teams in p.semi (it's just their 3rd-place
-  // guess among those two) — don't list it separately or its stage points get counted twice.
-  const allTipped = [p.winner, p.second, ...p.semi, ...p.quarter].filter(Boolean);
   let stagePts = 0;
-  allTipped.forEach(t => stagePts += stagePoints(t));
+  stagePts += cappedPoints(p.winner, 3);
+  stagePts += cappedPoints(p.second, 3);
+  p.semi.forEach(t    => stagePts += cappedPoints(t, 2));
+  p.quarter.forEach(t => stagePts += cappedPoints(t, 1));
 
   let bonusPts = 0;
   const r = results;
@@ -423,10 +429,9 @@ function bracketInner(name, p) {
   const isR     = hasResults();
 
   // Points for display (only when results are set)
-  const sp = t => isR ? stagePoints(t) : null;
   const ptsLabel = (t, extraBonus) => {
     if (!isR) return "";
-    const s = sp(t);
+    const s = cappedPoints(t, 3);
     const bonus = extraBonus || 0;
     const total = s + bonus;
     return total > 0 ? `+${total}p` : "";
@@ -453,19 +458,19 @@ function bracketInner(name, p) {
       <div class="b-col-body">
         ${match(
           slot(pill(p.semi[0],  1, "", "")),
-          slot(pill(p.quarter[0], 1, "", isR ? (sp(p.quarter[0]) > 0 ? `+${sp(p.quarter[0])}p` : "") : ""))
+          slot(pill(p.quarter[0], 1, "", isR ? (cappedPoints(p.quarter[0], 1) > 0 ? `+${cappedPoints(p.quarter[0], 1)}p` : "") : ""))
         )}
         ${match(
           slot(pill(p.winner,   1, "", "")),
-          slot(pill(p.quarter[1], 1, "", isR ? (sp(p.quarter[1]) > 0 ? `+${sp(p.quarter[1])}p` : "") : ""))
+          slot(pill(p.quarter[1], 1, "", isR ? (cappedPoints(p.quarter[1], 1) > 0 ? `+${cappedPoints(p.quarter[1], 1)}p` : "") : ""))
         )}
         ${match(
           slot(pill(p.semi[1],  1, "", "")),
-          slot(pill(p.quarter[2], 1, "", isR ? (sp(p.quarter[2]) > 0 ? `+${sp(p.quarter[2])}p` : "") : ""))
+          slot(pill(p.quarter[2], 1, "", isR ? (cappedPoints(p.quarter[2], 1) > 0 ? `+${cappedPoints(p.quarter[2], 1)}p` : "") : ""))
         )}
         ${match(
           slot(pill(p.second,   1, "", "")),
-          slot(pill(p.quarter[3], 1, "", isR ? (sp(p.quarter[3]) > 0 ? `+${sp(p.quarter[3])}p` : "") : ""))
+          slot(pill(p.quarter[3], 1, "", isR ? (cappedPoints(p.quarter[3], 1) > 0 ? `+${cappedPoints(p.quarter[3], 1)}p` : "") : ""))
         )}
       </div>
     </div>`;
@@ -479,13 +484,13 @@ function bracketInner(name, p) {
         ${match(
           slot(pill(p.winner,  2, "", "")),
           slot(semipill(p.semi[0], p.third, 2,
-                isR ? (sp(p.semi[0]) > 0 ? `+${sp(p.semi[0])}p` : "") : "",
+                isR ? (cappedPoints(p.semi[0], 2) > 0 ? `+${cappedPoints(p.semi[0], 2)}p` : "") : "",
                 s0bonus ? `+${s0bonus}p bonus` : ""))
         )}
         ${match(
           slot(pill(p.second,  2, "", "")),
           slot(semipill(p.semi[1], p.third, 2,
-                isR ? (sp(p.semi[1]) > 0 ? `+${sp(p.semi[1])}p` : "") : "",
+                isR ? (cappedPoints(p.semi[1], 2) > 0 ? `+${cappedPoints(p.semi[1], 2)}p` : "") : "",
                 s1bonus ? `+${s1bonus}p bonus` : ""))
         )}
       </div>
