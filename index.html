@@ -201,13 +201,6 @@
     .wrong   .b-pts  { color:var(--wrong); }
     .unknown .b-pts  { color:var(--blue-dk); }
 
-    /* 3rd place label */
-    .b-third {
-      font-size:.62rem; font-weight:700;
-      letter-spacing:.08em; text-transform:uppercase;
-      color:var(--bronze); margin-left:2px; flex-shrink:0;
-    }
-
     /* 3rd place box under the winner column */
     .b-third-box {
       margin-top:16px;
@@ -221,6 +214,7 @@
       letter-spacing:.08em; text-transform:uppercase;
       color:var(--muted);
     }
+    .b-third-box .b-dot { background:var(--bronze) !important; }
     .b-pill.small {
       font-size:.76rem;
       padding:5px 10px;
@@ -428,13 +422,11 @@ function pill(team, minStage, extraClass, ptsStr) {
 
 function semipill(team, thirdPick, minStage, ptsStr, bonusStr) {
   const state    = hasResults() ? slotState(team, minStage) : "unknown";
-  const isThird  = norm(team) === norm(thirdPick);
-  const thirdLbl = isThird ? `<span class="b-third">3:a</span>` : "";
   const pts      = (hasResults() && ptsStr)  ? `<span class="b-pts">${ptsStr}</span>`  : "";
   const bonus    = (hasResults() && bonusStr) ? `<span class="b-pts">${bonusStr}</span>` : "";
   return `<div class="b-pill ${state}">
     <div class="b-dot"></div>
-    <span class="b-name">${team}</span>${thirdLbl}${pts}${bonus}
+    <span class="b-name">${team}</span>${pts}${bonus}
   </div>`;
 }
 
