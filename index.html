@@ -174,6 +174,14 @@
     .b-pill.champion { background:var(--gold); color:#fff; font-weight:700;
                        box-shadow:0 2px 8px rgba(201,168,76,.3); }
 
+    /* Translucent golden halo around every predicted-winner box */
+    .col-win .b-pill {
+      box-shadow: 0 0 0 3px rgba(201,168,76,.28), 0 0 16px rgba(201,168,76,.22);
+    }
+    .col-win .b-pill.champion {
+      box-shadow: 0 0 0 3px rgba(201,168,76,.45), 0 2px 8px rgba(201,168,76,.3), 0 0 20px rgba(201,168,76,.35);
+    }
+
     .b-dot {
       width:7px; height:7px; border-radius:50%; flex-shrink:0;
     }
@@ -251,12 +259,6 @@ const val = (r, c) => {
     return (cell && cell.v !== undefined && cell.v !== null) ? cell.v.toString().trim() : '';
   };
 
-  // Helper: is cell bold?
-  const bold = (r, c) => {
-    const cell = ws[XLSX.utils.encode_cell({ r, c })];
-    return !!(cell && cell.s && cell.s.font && cell.s.font.bold);
-  };
-
   // Find person columns — any non-empty cell in row 0 except col 0 (which is the label column)
   participants = {};
   for (let c = 1; c <= range.e.c; c++) {
@@ -265,7 +267,8 @@ const val = (r, c) => {
 
     const semi0   = val(5, c);
     const semi1   = val(6, c);
-    const third   = bold(5, c) ? semi0 : bold(6, c) ? semi1 : "";
+    // 3rd-place pick is always the first "Semi" row (row 6) — no extra row needed.
+    const third   = semi0;
     const quarter = [8, 9, 10, 11].map(r => val(r, c)).filter(Boolean);
 
     participants[name] = {
