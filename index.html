@@ -265,7 +265,7 @@ const val = (r, c) => {
 
     const semi0   = val(5, c);
     const semi1   = val(6, c);
-    const third   = bold(5, c) ? semi0 : bold(6, c) ? semi1 : null;
+    const third   = bold(5, c) ? semi0 : bold(6, c) ? semi1 : "";
     const quarter = [8, 9, 10, 11].map(r => val(r, c)).filter(Boolean);
 
     participants[name] = {
