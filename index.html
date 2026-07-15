@@ -199,6 +199,25 @@
       letter-spacing:.08em; text-transform:uppercase;
       color:var(--bronze); margin-left:2px; flex-shrink:0;
     }
+
+    /* 3rd place box under the winner column */
+    .b-third-box {
+      margin-top:16px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:5px;
+    }
+    .b-third-box-label {
+      font-size:.6rem; font-weight:700;
+      letter-spacing:.08em; text-transform:uppercase;
+      color:var(--muted);
+    }
+    .b-pill.small {
+      font-size:.76rem;
+      padding:5px 10px;
+      width:auto; max-width:100%;
+    }
   </style>
 </head>
 <body>
@@ -513,10 +532,17 @@ function bracketInner(name, p) {
       </div>
     </div>`;
 
-  // Winner column (1 team, centred)
-  const champState = !isR ? "unknown"
-    : (norm(p.winner) === norm(r.winner) && r.winner) ? "champion"
-    : slotState(p.winner, 3) === "correct" ? "correct" : "wrong";
+  // Winner column (1 team, centred) — only ever colored once the real winner is known
+  const champState = (!isR || !r.winner) ? "unknown"
+    : (norm(p.winner) === norm(r.winner)) ? "champion"
+    : "wrong";
+
+  // Third-place pick, shown in a small box under the winner — only colored once
+  // the real 3rd place is confirmed
+  const thirdState = (!isR || !r.third) ? "unknown"
+    : (norm(p.third) === norm(r.third)) ? "correct"
+    : "wrong";
+  const thirdTag = (isR && thirdBonus) ? `<span class="b-pts">+${thirdBonus}p</span>` : "";
 
   const winnerCol = `
     <div class="b-col col-win">
@@ -531,6 +557,13 @@ function bracketInner(name, p) {
             </div>
           </div>
           <div class="b-slot" style="flex:1"></div>
+        </div>
+        <div class="b-third-box">
+          <div class="b-third-box-label">Trea</div>
+          <div class="b-pill small ${thirdState}">
+            <div class="b-dot"></div>
+            <span class="b-name">${p.third}</span>${thirdTag}
+          </div>
         </div>
       </div>
     </div>`;
