@@ -406,17 +406,15 @@ function renderPodium(scores) {
 
   if (!groups[1] && !groups[2] && !groups[3]) { podiumEl.innerHTML = ""; return; }
 
-  const medal = { 1: "🥇", 2: "🥈", 3: "🥉" };
   // Classic podium visual order: silver, gold, bronze
   podiumEl.innerHTML = [2, 1, 3].map(rank => {
     const g = groups[rank];
     if (!g) return `<div class="podium-col"></div>`;
     return `<div class="podium-col podium-${rank}">
       <div class="podium-names">
-        ${g.names.map(n => `<div class="podium-name">${n}</div>`).join("")}
+        ${g.names.map(n => `<div class="podium-name">- ${n}</div>`).join("")}
       </div>
       <div class="podium-block">
-        <div class="podium-medal">${medal[rank]}</div>
         <div class="podium-rank">${rank}</div>
         <div class="podium-pts">${g.pts}p</div>
       </div>
